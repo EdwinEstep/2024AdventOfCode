@@ -25,8 +25,22 @@ fn main() -> std::io::Result<()> {
     for line in reader.lines() {
         let lstr = line.unwrap().clone();
         let report: Vec<&str> = lstr.split_whitespace().collect();
+        let mut safety = false;
+        
+        if is_safe(&report) {
+            safety = true;
+        } else {
+            for index in 0..(report.len()) {
+                let mut next_try = report.clone();
+                next_try.remove(index);
 
-        let safety = is_safe(&report);
+                if is_safe(&next_try) {
+                    safety = true;
+                }
+            }
+        }
+
+
         if safety {
             num_safe += 1;
             println!(" SAFE! ");
@@ -41,69 +55,41 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+
 fn is_safe(report: &Vec<&str>) ->  bool {
     let mut increasing: bool = false;
     let mut decreasing: bool = false;
-    let mut num_bad = 0;
+    let mut safe: bool = true;
 
-    for index in 0..(report.len() - 2) {
+    for index in 0..(report.len()-1) {
         let num1 = report[index].parse::<u32>().unwrap();
         let num2 = report[index+1].parse::<u32>().unwrap();
-        let num3 = report[index+2].parse::<u32>().unwrap();
-        let diff12 = num1.abs_diff(num2);
-        let diff23 = num2.abs_diff(num3);
-        let diff13 = num1.abs_diff(num3);
+        let diff = num1.abs_diff(num2);
 
         print!("{num1} {num2} | ");
 
-        // special case: front, can always remove easily
-        if index == 0 && num1 == num2 || diff12 > 3 {
-            num_bad += 1;
-        }
-        // special case: back, can always remove easily
-        else if index == (report.len() - 3) && num2 == num3 || diff23 > 3 {
-                num_bad += 1;
-        }
-        // normal case: middle
-        else if num1 == num2 {
-            num_bad += 1; // recoverable
-        } else if diff12 > 3 {
-            if diff13 > 3 {
-                return false;
-            } else {
-                if num1 < num3 && increasing {
-                    num_bad += 1;
-                } else if num1 > num3 && decreasing {
-                    num_bad += 1;
-                } else {
-                    return false;
-                }
+        if num1 == num2 {
+            safe = false;
+        } else {
+            if diff == 0 || diff > 3 {
+                safe = false;
             }
-        } else { // good?
-            print!("here");
+
             if num1 < num2 {
+                increasing = true;
+
                 if decreasing {
-                    if num1 == num3 {
-                        return false;
-                    }
-                    num_bad += 1;
-                } else {
-                    increasing = true;
-                    print!("increasing");
+                    safe = false;
                 }
             } else {
+                decreasing = true;
+
                 if increasing {
-                    if num1 == num3 {
-                        return false;
-                    }
-                    num_bad += 1;
-                } else {
-                    decreasing = true;
-                    print!("decreasing");
+                    safe = false;
                 }
             }
         }
     }
 
-    return num_bad < 2;
+    return safe;
 }
