@@ -21,10 +21,7 @@ fn main() -> std::io::Result<()> {
     // find xmas!
     for (j, line) in word_search.iter().enumerate() {
         for (k, _letter) in line.iter().enumerate() {
-            // check if letter starts a sequence
-            if is_sequence(&word_search, "XMAS", (j, k)) {
-                num_xmas += 1;
-            }
+            num_xmas += num_sequences(&word_search, "XMAS", (j, k))
         }
     }
 
@@ -35,37 +32,43 @@ fn main() -> std::io::Result<()> {
 // start at the value given by coords and see if you can word search to find the sequence
 // because we're only finding straight up-down-left-right-diagonal words, we only need to 
 // check the perimeter around the first value in the sequence
-fn is_sequence(search_data: &Vec<Vec<char>>, sequence: &str, coords: (usize, usize)) ->  bool {
+fn num_sequences(search_data: &Vec<Vec<char>>, sequence: &str, coords: (usize, usize)) ->  u32 {
+    let mut count = 0;
+    println!("\nstarting coords: {:?}", coords);
+    
     if search_data[coords.0][coords.1] != sequence.chars().nth(0).unwrap() {
-        return false;
+        return 0;
     }
-
-    println!("{:?}", coords);
 
     // matches first char in sequence. now find a list of the secondth characters, to get 
     // trajectories
     for coords2 in adjacent_next(search_data, coords, sequence.chars().nth(1).unwrap()) {
-        println!("adjacent: {:?}", coords2);
-
-        let dir = (coords.0 as isize - coords2.0 as isize, coords.1 as isize - coords2.1 as isize);
+        let dir = (coords2.0 as isize - coords.0 as isize, coords2.1 as isize - coords.1 as isize);
         let mut new_coords = (coords2.0 as isize + dir.0, coords2.1 as isize + dir.1);
+        let mut is_seq = true;
+
+        println!("coords2: {:?}, dir: {:?}", coords2, dir);
         
         // keep going in that direction
         for letter in sequence[2..].chars() {
-            println!("new coords:  {:?}", new_coords);
-            if new_coords.0 < 0 || new_coords.1 < 0 || new_coords.0 > (sequence.len() as isize - 1) || new_coords.1 > (sequence.len() as isize - 1) {
-                return false;
+            println!("new coords: {:?}", new_coords);
+            if new_coords.0 < 0 || new_coords.1 < 0 || new_coords.0 > (search_data.len() as isize - 1) || new_coords.1 > (search_data[0].len() as isize - 1) {
+                is_seq = false;
+                print!("ooga, sequence.len() as isize - 1: {}", (sequence.len() as isize - 1));
             }
 
-            if search_data[new_coords.0 as usize][new_coords.1 as usize] != letter {
-                return false;
+            if is_seq && search_data[new_coords.0 as usize][new_coords.1 as usize] != letter {
+                print!("booga");
+                is_seq = false;
             } else {
                 new_coords = (new_coords.0 + dir.0, new_coords.1 + dir.1);
             }
         }
+
+        if is_seq { count += 1; }
     }
 
-    return true;
+    return count;
 }
 
 // returns a list of coordinates to search for next in the series
