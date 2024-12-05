@@ -20,7 +20,7 @@ fn main() -> std::io::Result<()> {
 
     // find xmas!
     for (j, line) in word_search.iter().enumerate() {
-        for (k, letter) in line.iter().enumerate() {
+        for (k, _letter) in line.iter().enumerate() {
             // check if letter starts a sequence
             if is_sequence(&word_search, "XMAS", (j, k)) {
                 num_xmas += 1;
@@ -45,17 +45,24 @@ fn is_sequence(search_data: &Vec<Vec<char>>, sequence: &str, coords: (usize, usi
     // matches first char in sequence. now find a list of the secondth characters, to get 
     // trajectories
     for coords2 in adjacent_next(search_data, coords, sequence.chars().nth(1).unwrap()) {
-        // let direction = coords - coords2;
-        // let new_coords = coords2.try_into().unwrap() + direction;
+        println!("adjacent: {:?}", coords2);
+
+        let dir = (coords.0 as isize - coords2.0 as isize, coords.1 as isize - coords2.1 as isize);
+        let mut new_coords = (coords2.0 as isize + dir.0, coords2.1 as isize + dir.1);
         
-        // // keep going in that direction
-        // for letter in sequence[2..] {
-        //     if search_data[new_coords.0][new_coords.1] != letter {
-        //         return false;
-        //     } else {
-        //         new_coords = new_coords + direction;
-        //     }
-        // }
+        // keep going in that direction
+        for letter in sequence[2..].chars() {
+            println!("new coords:  {:?}", new_coords);
+            if new_coords.0 < 0 || new_coords.1 < 0 || new_coords.0 > (sequence.len() as isize - 1) || new_coords.1 > (sequence.len() as isize - 1) {
+                return false;
+            }
+
+            if search_data[new_coords.0 as usize][new_coords.1 as usize] != letter {
+                return false;
+            } else {
+                new_coords = (new_coords.0 + dir.0, new_coords.1 + dir.1);
+            }
+        }
     }
 
     return true;
